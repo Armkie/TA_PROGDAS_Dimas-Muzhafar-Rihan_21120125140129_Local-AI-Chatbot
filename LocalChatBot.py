@@ -51,7 +51,9 @@ class LocalChatBot:
 
 
         # Kondisi default (implementasi Modul 1)
+        self.chat_context = []
         self.loading = False
+        self.Parameter = 'None'
         self.Nama_Model = 'None'
         self.last_model = None
         self.sys_window = None
@@ -89,29 +91,35 @@ class LocalChatBot:
         if user_input == "":
             messagebox.showwarning("Peringatan", "Pesan harus di isi!")
 
-        # Menentukan Nama Model dan Parameter berdasarkan pilihan model menggunakan getter (Implementasi Modul 2 & 6)
+        # Menentukan Nama Model, Jumlah Parameter dan Context Length berdasarkan pilihan model menggunakan getter (Implementasi Modul 2 & 6)
         if "gemma3:1b" in self.combo_Model.get():
-            Parameter = '1'
+            self.Parameter = '1 Bilion / Miliar'
             self.Nama_Model = "Gemma 3"
+            ctx_length = 65536
         elif "granite3.3" in self.combo_Model.get():
-            Parameter = '8'
+            self.Parameter = '8 Bilion / Miliar'
             self.Nama_Model = "Granite 3.3"
+            ctx_length = 32768
         elif "llama3.2:1b" in self.combo_Model.get():
-            Parameter = '1'
+            self.Parameter = '1 Bilion / Miliar'
             self.Nama_Model = "Llama 3.2"
+            ctx_length = 65536
         elif "deepseek-r1" in self.combo_Model.get():
-            Parameter = '7'
+            self.Parameter = '7 Bilion / Miliar'
             self.Nama_Model = "DeepSeek R1"
+            ctx_length = 32768
         elif "llama2-uncensored" in self.combo_Model.get():
-            Parameter = '7'
+            self.Parameter = '7 Bilion / Miliar'
             self.Nama_Model = "Llama 2 Uncensored"
+            ctx_length = 32768
         elif "sahabatai-9b" in self.combo_Model.get():
-            Parameter = '9'
-            self.Nama_Model = "Sahabat-AI"
+            self.Parameter = '9 Bilion / Miliar'
+            self.Nama_Model = "Gemma2BySahabat-AI"
+            ctx_length = 16384
 
         # Menampilkan Jenis Model dan juga Input User di Area Text
         if self.last_model != self.combo_Model.get():
-            self.text_area.insert(END, "Kamu Sedang Menggunakan: " + self.Nama_Model + " dengan " + Parameter + " Miliar Parameter \n", 'else')
+            self.text_area.insert(END, "Kamu Sedang Menggunakan: " + self.Nama_Model + " dengan " + self.Parameter + " Parameter \n", 'else')
             self.text_area.insert(END, "\n")
             self.last_model = self.combo_Model.get()
         self.text_area.insert(END, "You: \n" + user_input + '\n', 'user')
@@ -124,11 +132,25 @@ class LocalChatBot:
 
         # Men-Generate Respon dari Model (implementasi Modul 3)
         self.text_area.insert(END,'Bot : \n', 'else')
-        for chunk in generate(self.combo_Model.get(), user_input, stream=True):
-            self.loading = False
-            self.text_area.insert(END,chunk['response'], 'else')
+        for chunk in generate(
+            model=self.combo_Model.get(),
+            prompt=user_input,
+            stream=True,
+            context=self.chat_context,       # ← send previous context
+            options={'num_ctx': ctx_length}  # context length
+        ):
+        
+             # update context (from returned tokenized state)
+            if "context" in chunk:
+                self.chat_context = chunk["context"]
+
+            part = chunk["response"]
+            self.text_area.insert(END, part, 'else')
             self.text_area.see(END)
 
+
+        print(self.chat_context)
+        self.loading = False
         self.text_area.insert(END, "\n", 'else')
         self.text_area.insert(END, "\n")
         self.text_area.see(END)
@@ -153,10 +175,12 @@ class LocalChatBot:
 
         for model in stats['models']:
             info.insert(END, "=== System Usage ===\n")
-            info.insert(END, f"  Model: {self.Nama_Model}\n")
-            info.insert(END, f"  VRAM: {model.get('Vram', model.size_vram)/1024/1024} MB\n")
-            info.insert(END, f"    Size: {model.get('size', model.size)/1024/1024} MB\n\n")
-            info.insert(END, f"Details: {model.get('details', model.details)}\n")
+            info.insert(END, f"             Model: {self.Nama_Model}\n")
+            info.insert(END, f"     Parameter: {self.Parameter}\n")
+            info.insert(END, f"            VRAM: {model.get('Vram', model.size_vram)/1024/1024} MB\n")
+            info.insert(END, f"              Size: {model.get('size', model.size)/1024/1024} MB\n\n")
+            info.insert(END, f"           Details: {model.get('details', model.details)}\n")
+            info.insert(END, f"Context Length: {model.get('context', model.context_length)}\n")
             info.insert(END, "\n")
             info.insert(END, "====================\n\n")
         return
