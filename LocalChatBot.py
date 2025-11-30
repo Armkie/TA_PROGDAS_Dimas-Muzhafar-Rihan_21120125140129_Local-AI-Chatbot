@@ -140,16 +140,16 @@ class LocalChatBot:
             options={'num_ctx': ctx_length}  # context length
         ):
         
-             # update context (from returned tokenized state)
+             # update context setelah menerima chunk baru
             if "context" in chunk:
                 self.chat_context = chunk["context"]
 
+            # Menampilkan Respon secara Bertahap di Area Text
             part = chunk["response"]
             self.text_area.insert(END, part, 'else')
             self.text_area.see(END)
 
-
-        print(self.chat_context)
+        # Mengganti status loading menjadi False setelah respon selesai
         self.loading = False
         self.text_area.insert(END, "\n", 'else')
         self.text_area.insert(END, "\n")
