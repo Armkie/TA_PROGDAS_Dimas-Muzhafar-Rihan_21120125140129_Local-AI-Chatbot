@@ -5,7 +5,9 @@ import tkinter.ttk as ttk
 import threading
 import time
 
+#class berisi constructor dan method (implementasi Modul 5)
 class LocalChatBot:
+    #fungsi inisialisasi GUI (implementasi Modul 4 & 8)
     def __init__(self, root):
         # Inisialisasi Jendela Utama
         self.root = root
@@ -48,7 +50,7 @@ class LocalChatBot:
         self.sys_button.pack(pady=5)
 
 
-        # Kondisi default
+        # Kondisi default (implementasi Modul 1)
         self.loading = False
         self.Nama_Model = 'None'
         self.last_model = None
@@ -75,16 +77,19 @@ class LocalChatBot:
             i += 1
             time.sleep(0.4)
 
-        self.loading_label.config(text="")  #Menghapus teks loading setelah selesai
+
+        #Menghapus teks loading setelah selesai
+        self.loading_label.config(text="")
 
     # Fungsi untuk Mendapatkan Respon dari Model
     def get_response(self):
         user_input = self.entry.get()
 
+        #warning jika input user kosong
         if user_input == "":
             messagebox.showwarning("Peringatan", "Pesan harus di isi!")
 
-        # Menentukan Nama Model dan Parameter berdasarkan pilihan model
+        # Menentukan Nama Model dan Parameter berdasarkan pilihan model menggunakan getter (Implementasi Modul 2 & 6)
         if "gemma3:1b" in self.combo_Model.get():
             Parameter = '1'
             self.Nama_Model = "Gemma 3"
@@ -117,7 +122,7 @@ class LocalChatBot:
         self.loading = True
         threading.Thread(target=self.animate_loading).start()
 
-        # Men-Generate Respon dari Model
+        # Men-Generate Respon dari Model (implementasi Modul 3)
         self.text_area.insert(END,'Bot : \n', 'else')
         for chunk in generate(self.combo_Model.get(), user_input, stream=True):
             self.loading = False
